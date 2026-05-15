@@ -128,11 +128,14 @@ const els = {
   studySegments: document.querySelectorAll('[data-study-mode]'),
   cardType: document.querySelector('#cardType'),
   cardPrompt: document.querySelector('#cardPrompt'),
+  frontSpeakButton: document.querySelector('#frontSpeakButton'),
+  frontTermHint: document.querySelector('#frontTermHint'),
   studyCardFront: document.querySelector('#studyCardFront'),
   studyCardBack: document.querySelector('#studyCardBack'),
   autoSpeakButton: document.querySelector('#autoSpeakButton'),
   revealButton: document.querySelector('#revealButton'),
   cardAnswer: document.querySelector('#cardAnswer'),
+  studyActions: document.querySelector('.study-actions'),
   qualityButtons: document.querySelectorAll('.act-btn[data-quality]'),
   studyProgressBar: document.querySelector('#studyProgressBar'),
   // Library
@@ -223,6 +226,7 @@ function setView(view) {
 }
 
 function renderAll() {
+  document.body.dataset.view = currentView;
   renderStudy();
   renderStats();
   renderPresetSummary();
@@ -266,6 +270,7 @@ function bindEvents() {
   }));
   els.globalSearch.addEventListener('input', () => { renderLibrary(); renderStudy(); });
   els.exportButton.addEventListener('click', exportData);
+  els.frontSpeakButton.addEventListener('click', () => speakItem(currentCardId, 'uk'));
   els.autoSpeakButton.addEventListener('click', unlockAutoSpeak);
   els.revealButton.addEventListener('click', revealAnswer);
   els.qualityButtons.forEach(b => b.addEventListener('click', () => markCard(b.dataset.quality)));
@@ -402,6 +407,7 @@ function renderStudy() {
 
   // Front prompt
   els.cardPrompt.textContent = studyMode === 'meaning' ? card.term : card.meaning;
+  els.frontTermHint.textContent = card.term;
 
   // Reset to front
   const front = document.getElementById('studyCardFront');
@@ -409,10 +415,11 @@ function renderStudy() {
   if (front) front.hidden = false;
   if (back) back.hidden = true;
   els.cardAnswer.innerHTML = '';
+  if (els.studyActions) els.studyActions.hidden = true;
 
   // Re-enable buttons
   els.revealButton.disabled = false;
-  els.revealButton.textContent = '点击显示答案';
+  els.revealButton.textContent = '看答案';
   els.qualityButtons.forEach(b => b.disabled = false);
   updateAutoSpeakButton();
 
@@ -423,16 +430,16 @@ function revealAnswer() {
   const card = state.items.find(i => i.id === currentCardId);
   if (!card) return;
 
-  const primary = studyMode === 'meaning' ? card.meaning : card.term;
-  const secondary = studyMode === 'meaning' ? card.term : card.meaning;
-
+  const collocations = card.collocations || [];
   els.cardAnswer.innerHTML =
-    '<strong>' + escapeHtml(primary) + '</strong>' +
-    '<p>' + escapeHtml(secondary) + '</p>' +
-    '<div class="exam-meaning-block"><span class="exam-label">常考</span><span>' + escapeHtml(card.examMeaning || card.meaning) + '</span></div>' +
-    renderCollocationTags(card.collocations) +
-    '<div class="sound-row"><button data-speak="' + card.id + '" data-accent="us" type="button">美式</button><button data-speak="' + card.id + '" data-accent="uk" type="button">英式</button></div>' +
-    '<p class="mini-note">' + escapeHtml(card.example) + '</p>';
+    '<div class="answer-word-block">' +
+      '<strong>' + escapeHtml(card.term) + '</strong>' +
+      '<div class="study-sound-line answer-sound-line"><button data-speak="' + card.id + '" data-accent="uk" class="study-sound-pill" type="button">英</button><button data-speak="' + card.id + '" data-accent="us" class="study-sound-pill" type="button">美</button></div>' +
+    '</div>' +
+    '<div class="answer-choice-card"><span>' + escapeHtml(card.type === 'phrase' ? 'phr.' : '释义') + '</span><p>' + escapeHtml(card.meaning) + '</p></div>' +
+    '<div class="answer-choice-card"><span>常考</span><p>' + escapeHtml(card.examMeaning || card.meaning) + '</p></div>' +
+    (collocations.length ? '<div class="answer-choice-card"><span>搭配</span><p>' + escapeHtml(collocations.join('；')) + '</p></div>' : '') +
+    (card.example ? '<div class="answer-choice-card"><span>例句</span><p>' + escapeHtml(card.example) + '</p></div>' : '');
 
   bindSpeakButtons(els.cardAnswer);
 
@@ -441,6 +448,7 @@ function revealAnswer() {
   const back = document.getElementById('studyCardBack');
   if (front) front.hidden = true;
   if (back) back.hidden = false;
+  if (els.studyActions) els.studyActions.hidden = false;
 
   els.revealButton.disabled = true;
 }

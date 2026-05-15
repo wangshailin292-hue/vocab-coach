@@ -39,17 +39,26 @@
   <section id="studyView" class="page active">
     <div class="study-screen">
       <div class="study-header">
-        <span id="studyCount" class="study-hdr-count">1/20</span>
+        <div class="study-hdr-left">
+          <span class="study-back-icon">‹</span>
+          <span id="studyCount" class="study-hdr-count">1/20</span>
+        </div>
         <div class="segmented sm">
           <button class="segment active" data-study-mode="meaning">英→中</button>
           <button class="segment" data-study-mode="term">中→英</button>
         </div>
-        <span id="cardType" class="study-hdr-tag">单词</span>
+        <div class="study-tools">
+          <span id="cardType" class="study-hdr-tag">单词</span>
+          <span class="study-tool">☆</span>
+          <span class="study-tool">⋯</span>
+        </div>
       </div>
       <div class="study-body">
         <div class="study-card-wrap">
           <div class="study-front" id="studyCardFront">
             <p id="cardPrompt" class="study-word">loading</p>
+            <div class="study-sound-line"><button id="frontSpeakButton" class="study-sound-pill" type="button">英</button><span id="frontTermHint"></span></div>
+            <p class="study-recall-hint">先回想词义再选择，想不起来「看答案」</p>
             <button id="autoSpeakButton" class="auto-speak-btn" type="button" hidden>开启自动朗读</button>
             <button id="revealButton" class="study-tap-btn">点击显示答案</button>
           </div>

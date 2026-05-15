@@ -1,0 +1,12 @@
+.git
+.gitignore
+CHAT_LOG.md
+README.md
+deploy/*.md
+tools
+*.log
+node_modules
+npm-debug.log*
+.env
+.env.*
+!/.env.example

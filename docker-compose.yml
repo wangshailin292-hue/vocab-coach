@@ -1,0 +1,31 @@
+services:
+  vocab-coach:
+    build: .
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - vocab-coach
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

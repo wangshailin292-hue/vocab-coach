@@ -155,7 +155,7 @@ const els = {
   itemExample: document.querySelector('#itemExample'),
   formSubmitButton: document.querySelector('#formSubmitButton'),
   cancelEditButton: document.querySelector('#cancelEditButton'),
-  libraryList: document.querySelector('#libraryList'),
+  libraryList: document.querySelector('#libList'),
   globalSearch: document.querySelector('#globalSearch'),
   exportButton: document.querySelector('#exportButton'),
   // Read
@@ -216,23 +216,26 @@ function init() {
 ﻿// app-views.js - View switching, rendering, connection, stats
 
 function setView(view) {
+    // Hide tab bar in study view (fallback for browsers without :has support)
+    const tabBar = document.querySelector(".tab-bar");
+    if (tabBar) tabBar.style.display = (view === "study") ? "none" : "";
   currentView = view;
   if (view === 'study') lastAutoSpokenCardId = '';
   if (location.hash.replace('#', '') !== view) history.replaceState(null, '', '#' + view);
   els.tabItems.forEach(b => b.classList.toggle('active', b.dataset.view === view));
   // mobileTabs removed(t => t.classList.toggle('active', t.dataset.view === view));
-  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === view + 'View'));
+  document.querySelectorAll('.view').forEach(p => p.classList.toggle('active', p.id === view + 'View'));
   renderAll();
 }
 
 function renderAll() {
-  document.body.dataset.view = currentView;
+  // body dataset removed - using :has CSS
   renderStudy();
   renderStats();
   renderPresetSummary();
   renderLibrary();
   if (currentView === 'read') renderRead();
-  if (currentView === 'habit') renderHabits();
+  if (currentView === 'habits') renderHabits();
   renderConnection();
 }
 
@@ -290,6 +293,7 @@ function bindEvents() {
     saveState(); renderAll();
     showToast('全部词库已检查：新增 ' + r.added + ' 个，更新 ' + r.updated + ' 个');
   });
+  const addItemBtn = document.querySelector('#addItemBtn'); if (addItemBtn) addItemBtn.addEventListener('click', () => { els.addItemForm.scrollIntoView({ behavior: 'smooth' }); els.itemTerm.focus(); });
   els.addItemForm.addEventListener('submit', e => {
     e.preventDefault();
     const wasEditing = Boolean(editingItemId);

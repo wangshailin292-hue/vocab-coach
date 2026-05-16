@@ -135,8 +135,8 @@ const els = {
   autoSpeakButton: document.querySelector('#autoSpeakButton'),
   revealButton: document.querySelector('#revealButton'),
   cardAnswer: document.querySelector('#cardAnswer'),
-  studyActions: document.querySelector('.study-actions'),
-  qualityButtons: document.querySelectorAll('.act-btn[data-quality]'),
+  studyActions: document.querySelector('.act-row'),
+  qualityButtons: document.querySelectorAll('.act[data-quality]'),
   studyProgressBar: document.querySelector('#studyProgressBar'),
   // Library
   librarySegments: document.querySelectorAll('[data-library-filter]'),
@@ -155,7 +155,7 @@ const els = {
   itemExample: document.querySelector('#itemExample'),
   formSubmitButton: document.querySelector('#formSubmitButton'),
   cancelEditButton: document.querySelector('#cancelEditButton'),
-  libraryList: document.querySelector('#libraryList'),
+  libraryList: document.querySelector('#libList'),
   globalSearch: document.querySelector('#globalSearch'),
   exportButton: document.querySelector('#exportButton'),
   // Read

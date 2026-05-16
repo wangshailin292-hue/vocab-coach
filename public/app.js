@@ -19,7 +19,7 @@ const state = loadState();
 const settings = loadSettings();
 const srsConfig = loadSrsConfig();
 
-let currentView = 'study';
+let currentView = 'home';
 let studyMode = 'meaning';
 let libraryFilter = 'all';
 let essayMode = 'text';
@@ -155,7 +155,7 @@ const els = {
   itemExample: document.querySelector('#itemExample'),
   formSubmitButton: document.querySelector('#formSubmitButton'),
   cancelEditButton: document.querySelector('#cancelEditButton'),
-  libraryList: document.querySelector('#libList'),
+  libraryList: document.querySelector('#libraryList'),
   globalSearch: document.querySelector('#globalSearch'),
   exportButton: document.querySelector('#exportButton'),
   // Read
@@ -206,7 +206,7 @@ function init() {
   bindEvents();
   fetchConfig();
   const initialView = location.hash.replace('#', '');
-  if (['study','library','read','essay','settings'].includes(initialView)) {
+  if (['home','study','library','read','essay','habits','settings'].includes(initialView)) {
     setView(initialView);
   } else {
     renderAll();
@@ -216,26 +216,24 @@ function init() {
 ﻿// app-views.js - View switching, rendering, connection, stats
 
 function setView(view) {
-    // Hide tab bar in study view (fallback for browsers without :has support)
-    const tabBar = document.querySelector(".tab-bar");
-    if (tabBar) tabBar.style.display = (view === "study") ? "none" : "";
   currentView = view;
   if (view === 'study') lastAutoSpokenCardId = '';
   if (location.hash.replace('#', '') !== view) history.replaceState(null, '', '#' + view);
   els.tabItems.forEach(b => b.classList.toggle('active', b.dataset.view === view));
   // mobileTabs removed(t => t.classList.toggle('active', t.dataset.view === view));
-  document.querySelectorAll('.view').forEach(p => p.classList.toggle('active', p.id === view + 'View'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === view + 'View'));
   renderAll();
 }
 
 function renderAll() {
-  // body dataset removed - using :has CSS
+  document.body.dataset.view = currentView;
   renderStudy();
   renderStats();
   renderPresetSummary();
   renderLibrary();
   if (currentView === 'read') renderRead();
   if (currentView === 'habits') renderHabits();
+  if (currentView === 'habit') renderHabits();
   renderConnection();
 }
 
@@ -257,6 +255,9 @@ function bindEvents() {
 
   // Nav
   els.tabItems.forEach(function(b){b.addEventListener("click",function(){setView(b.dataset.view)})});
+  document.querySelectorAll("[data-nav]").forEach(function(b){b.addEventListener("click",function(){setView(b.dataset.nav)})});
+  document.querySelectorAll("[data-action=study]").forEach(function(b){b.addEventListener("click",function(){setView("study")})});
+  document.querySelectorAll("[data-back]").forEach(function(b){b.addEventListener("click",function(){setView(b.dataset.back)})});
   // mobile-tabs removed;
 
   // Study
@@ -293,7 +294,6 @@ function bindEvents() {
     saveState(); renderAll();
     showToast('全部词库已检查：新增 ' + r.added + ' 个，更新 ' + r.updated + ' 个');
   });
-  const addItemBtn = document.querySelector('#addItemBtn'); if (addItemBtn) addItemBtn.addEventListener('click', () => { els.addItemForm.scrollIntoView({ behavior: 'smooth' }); els.itemTerm.focus(); });
   els.addItemForm.addEventListener('submit', e => {
     e.preventDefault();
     const wasEditing = Boolean(editingItemId);
@@ -1039,230 +1039,4 @@ function escapeHtml(value) {
 
 init();
 
-// ========== app-dashboard.js - Stats and dashboard rendering ==========
-
-const elsStats = {
-  statTotalWords: document.querySelector('#statTotalWords'),
-  statMastered: document.querySelector('#statMastered'),
-  statDueToday: document.querySelector('#statDueToday'),
-  statTotalReviews: document.querySelector('#statTotalReviews'),
-  progressCircle: document.querySelector('#progressCircle'),
-  ringPercent: document.querySelector('#ringPercent'),
-  weeklyHeatmap: document.querySelector('#weeklyHeatmap'),
-  recentReviews: document.querySelector('#recentReviews'),
-  streakBadge: document.querySelector('#streakBadge'),
-  streakCount: document.querySelector('#streakCount'),
-  welcomeCard: document.querySelector('#welcomeCard'),
-  welcomeTitle: document.querySelector('#welcomeTitle'),
-  welcomeSub: document.querySelector('#welcomeSub'),
-  sessionCompleteView: document.querySelector('#sessionCompleteView'),
-  sessionRight: document.querySelector('#sessionRight'),
-  sessionHard: document.querySelector('#sessionHard'),
-  sessionAgain: document.querySelector('#sessionAgain'),
-  sessionCompleteMsg: document.querySelector('#sessionCompleteMsg'),
-};  
-
-function renderDashboard() {
-  if (!elsStats.statTotalWords) return;
-  
-  const total = state.items.length;
-  const mastered = state.items.filter(i => i.mastery >= 4).length;
-  const dueToday = getDueItems().length;
-  const totalReviews = state.sessions.reduce((sum, s) => sum + (s.reviewed || s.count || 0), 0);
-  const masteryRate = total > 0 ? Math.round((mastered / total) * 100) : 0;
-  
-  // Stats cards
-  elsStats.statTotalWords.textContent = total;
-  elsStats.statMastered.textContent = mastered;
-  elsStats.statDueToday.textContent = dueToday;
-  elsStats.statTotalReviews.textContent = totalReviews;
-  
-  // Progress ring
-  const circumference = 326.73; // 2 * PI * 52
-  const offset = circumference - (masteryRate / 100) * circumference;
-  if (elsStats.progressCircle) {
-    elsStats.progressCircle.style.strokeDashoffset = offset;
-  }
-  if (elsStats.ringPercent) {
-    elsStats.ringPercent.textContent = masteryRate + '%';
-  }
-  
-  // Streak
-  const streak = calculateStreak();
-  if (elsStats.streakCount) elsStats.streakCount.textContent = streak;
-  if (elsStats.streakBadge) {
-    elsStats.streakBadge.style.display = streak > 0 ? 'inline-flex' : 'none';
-  }
-  
-  // Welcome card
-  if (elsStats.welcomeTitle) {
-    if (total <= 2) {
-      elsStats.welcomeTitle.textContent = '开始你的学习之旅';
-      elsStats.welcomeSub.textContent = '去词库导入四级/六级词汇，开启你的背词之路';
-    } else if (dueToday === 0) {
-      elsStats.welcomeTitle.textContent = '🎉 今日任务完成';
-      elsStats.welcomeSub.textContent = '你已经完成今天所有待复习内容，继续保持！';
-    } else {
-      elsStats.welcomeTitle.textContent = '继续加油！';
-      elsStats.welcomeSub.textContent = '还有 ' + dueToday + ' 个词条等待复习';
-    }
-  }
-  
-  // Weekly heatmap
-  renderWeeklyHeatmap();
-  
-  // Recent reviews
-  renderRecentReviews();
-}
-
-function calculateStreak() {
-  const sessions = state.sessions || [];
-  if (!sessions.length) return 0;
-  
-  const dates = [...new Set(sessions.map(s => s.date || todayKey()))].sort().reverse();
-  if (dates[0] !== todayKey()) return 0;
-  
-  let streak = 1;
-  for (let i = 1; i < dates.length; i++) {
-    const prev = new Date(dates[i - 1]);
-    const curr = new Date(dates[i]);
-    const diff = (prev - curr) / (1000 * 60 * 60 * 24);
-    if (diff === 1) streak++;
-    else break;
-  }
-  return streak;
-}
-
-function renderWeeklyHeatmap() {
-  if (!elsStats.weeklyHeatmap) return;
-  const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-  const today = new Date();
-  const sessions = state.sessions || [];
-  const activeDates = new Set(sessions.map(s => s.date));
-  
-  let html = '';
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-    const isToday = key === todayKey();
-    const isDone = activeDates.has(key);
-    html += '<div class="heatmap-day' + (isDone ? ' done' : '') + (isToday ? ' today' : '') + '">' +
-      '<span class="day-name">' + dayNames[d.getDay()] + '</span>' +
-      (isDone ? '✓' : '·') +
-      '</div>';
-  }
-  elsStats.weeklyHeatmap.innerHTML = html;
-}
-
-function renderRecentReviews() {
-  if (!elsStats.recentReviews) return;
-  const reviews = (state.reviews || []).slice(0, 5);
-  if (!reviews.length) {
-    elsStats.recentReviews.innerHTML = '<div class="empty-state"><strong>还没有批改记录</strong><span>去「批改」tab 写一篇作文试试 AI 批改</span></div>';
-    return;
-  }
-  elsStats.recentReviews.innerHTML = reviews.map(r => {
-    const date = r.reviewedAt ? new Date(r.reviewedAt).toLocaleDateString('zh-CN') : '';
-    const scoreColor = (r.score || 0) >= 80 ? 'var(--green)' : (r.score || 0) >= 60 ? 'var(--orange)' : 'var(--red)';
-    return '<div class="review-card">' +
-      '<div class="review-date">' + escapeHtml(date) + '</div>' +
-      '<div class="review-score" style="color:' + scoreColor + '">' + (r.score || '--') + ' 分</div>' +
-      '<div class="review-comment">' + escapeHtml((r.teacherCommentCn || '').slice(0, 80)) + '</div>' +
-      '</div>';
-  }).join('');
-}
-
-// ========== SESSION COMPLETE ==========
-let sessionStats = { right: 0, hard: 0, again: 0 };
-
-function onStudySessionComplete() {
-  const due = getDueItems();
-  if (due.length > 0) {
-    // More weak words to review
-    if (elsStats.sessionCompleteMsg) {
-      elsStats.sessionCompleteMsg.textContent = '还有 ' + due.length + ' 个薄弱词可以继续复习';
-    }
-  }
-  if (elsStats.sessionRight) elsStats.sessionRight.textContent = sessionStats.right;
-  if (elsStats.sessionHard) elsStats.sessionHard.textContent = sessionStats.hard;
-  if (elsStats.sessionAgain) elsStats.sessionAgain.textContent = sessionStats.again;
-  
-  showView('sessionComplete');
-  document.querySelector('.tab-bar').style.display = 'none';
-}
-
-function onContinueStudy() {
-  hideView('sessionComplete');
-  document.querySelector('.tab-bar').style.display = '';
-  sessionStats = { right: 0, hard: 0, again: 0 };
-  showView('study');
-  initStudySession();
-}
-
-function showView(viewId) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  const target = document.querySelector('#' + viewId + 'View');
-  if (target) {
-    target.classList.add('active');
-    target.removeAttribute('hidden');
-  }
-  if (viewId === 'study' || viewId === 'sessionComplete') {
-    document.querySelector('.tab-bar').style.display = 'none';
-  } else {
-    document.querySelector('.tab-bar').style.display = '';
-  }
-}
-
-function hideView(viewId) {
-  const target = document.querySelector('#' + viewId + 'View');
-  if (target) {
-    target.classList.remove('active');
-    target.setAttribute('hidden', '');
-  }
-}
-
-
-// ========== Enhanced init and routing ==========
-
-// Override tab click to use showView
-const origInit = (typeof init === 'function') ? init : function(){};
-
-// Hook into the existing init - update view switching to render dashboard
-const origShowView = function(viewId) {
-  if (viewId === 'stats') {
-    renderDashboard();
-  }
-};
-
-// After init, hook tab clicks for stats rendering
-setTimeout(function() {
-  const tabItems = document.querySelectorAll('.tab-item');
-  tabItems.forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      const view = this.getAttribute('data-view');
-      if (view === 'stats') {
-        setTimeout(renderDashboard, 100);
-      }
-    });
-  });
-  
-  // Hook session continue button
-  const continueBtn = document.querySelector('#sessionContinueBtn');
-  if (continueBtn) {
-    continueBtn.addEventListener('click', onContinueStudy);
-  }
-  const backBtn = document.querySelector('#sessionBackBtn');
-  if (backBtn) {
-    backBtn.addEventListener('click', function() {
-      hideView('sessionComplete');
-      document.querySelector('.tab-bar').style.display = '';
-      showView('library');
-      document.querySelectorAll('.tab-item').forEach(function(t) {
-        t.classList.toggle('active', t.getAttribute('data-view') === 'library');
-      });
-      renderLibrary();
-    });
-  }
-}, 500);
-
+function updateHomeBadges(){var due=getDueItems().length;var total=state.items.length;var d=document.getElementById('homeDueBadge');if(d)d.textContent='今日 '+due+' 词';var t=document.getElementById('homeTotalBadge');if(t)t.textContent=total+' 词';}

@@ -2,280 +2,207 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1a1d23">
-<meta name="format-detection" content="telephone=no"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>词句练习室 · 不背单词风格</title>
+<meta name="theme-color" content="#f5f3ef">
+<title>词句练习室</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <div id="app">
 
-  <!-- ===== STUDY (fullscreen immersive) ===== -->
-  <div id="studyView" class="view active">
-    <div class="study-top">
-      <span class="study-back-btn">‹</span>
-      <span id="studyCount" class="study-progress-text">1 / 20</span>
-      <div class="study-mode-switch">
-        <button class="mode-btn active" data-study-mode="meaning">英→中</button>
-        <button class="mode-btn" data-study-mode="term">中→英</button>
+  <!-- HOME (default landing) -->
+  <section id="homeView" class="panel active">
+    <div class="home-head">
+      <h1>词句练习室</h1>
+      <p class="home-sub">每天一点，积少成多</p>
+    </div>
+    <div class="home-cards">
+      <div class="home-card study-entry" data-action="study">
+        <div class="hc-icon">📖</div>
+        <div class="hc-label">开始复习</div>
+        <div class="hc-sub" id="homeDueBadge">今日 0 词</div>
       </div>
-      <div class="study-top-right">
-        <span id="cardType" class="study-type-badge">单词</span>
-        <span class="study-icon-btn">☆</span>
-        <span class="study-icon-btn">⋯</span>
+      <div class="home-card" data-nav="library">
+        <div class="hc-icon">📚</div>
+        <div class="hc-label">词库</div>
+        <div class="hc-sub" id="homeTotalBadge">0 词</div>
+      </div>
+      <div class="home-card" data-nav="read">
+        <div class="hc-icon">📰</div>
+        <div class="hc-label">阅读</div>
+        <div class="hc-sub">AI 生成文章</div>
+      </div>
+      <div class="home-card" data-nav="essay">
+        <div class="hc-icon">✍️</div>
+        <div class="hc-label">批改</div>
+        <div class="hc-sub">AI 批改作文</div>
+      </div>
+      <div class="home-card" data-nav="habits">
+        <div class="hc-icon">📊</div>
+        <div class="hc-label">习惯</div>
+        <div class="hc-sub">薄弱项分析</div>
+      </div>
+      <div class="home-card" data-nav="settings">
+        <div class="hc-icon">⚙️</div>
+        <div class="hc-label">设置</div>
+        <div class="hc-sub">API · 间隔</div>
       </div>
     </div>
+  </section>
 
-    <div class="study-card-area">
-      <div class="study-card" id="studyCard">
-        <div class="card-front" id="cardFront"><div id="studyCardFront">
-          <p id="cardPrompt" class="card-word">loading</p>
-          <div class="card-sound-row">
-            <button id="frontSpeakButton" class="sound-btn" type="button">🔊 英</button>
-            <span id="frontTermHint" class="term-hint"></span>
-          </div>
-          <p class="card-recall-hint">先回想词义，再点下方查看答案</p>
-          <button id="revealButton" class="card-reveal-btn">点击显示答案</button>
-        </div>
-        <div class="card-back" id="cardBack" hidden><div id="studyCardBack">
-          </div><div id="cardAnswer" class="card-answer"></div>
-        </div>
+  <!-- STUDY -->
+  <section id="studyView" class="panel">
+    <div class="study-head">
+      <button class="back-btn" data-back="home">‹ 返回</button>
+      <span id="studyCount">1 / 20</span>
+      <div class="study-mode">
+        <button class="mode active" data-study-mode="meaning">英→中</button>
+        <button class="mode" data-study-mode="term">中→英</button>
+      </div>
+      <span id="cardType" class="type-tag">单词</span>
+    </div>
+    <div class="study-body">
+      <div class="card-front" id="studyCardFront">
+        <p id="cardPrompt" class="big-word">loading</p>
+        <button id="frontSpeakButton" class="speak-btn">🔊 英</button>
+        <button id="revealButton" class="reveal-btn">点击显示答案</button>
+      </div>
+      <div class="card-back" id="studyCardBack" hidden>
+        <div id="cardAnswer"></div>
       </div>
     </div>
-
-    <div class="study-bottom">
-      <div class="study-actions">
-        <button class="act-btn again" data-quality="again">
-          <div class="act-icon">✕</div>
-          <span>不认识</span>
-        </button>
-        <button class="act-btn hard" data-quality="hard">
-          <div class="act-icon">—</div>
-          <span>模糊</span>
-        </button>
-        <button class="act-btn easy" data-quality="easy">
-          <div class="act-icon">✓</div>
-          <span>认识</span>
-        </button>
+    <div class="study-foot">
+      <div class="act-row">
+        <button class="act again" data-quality="again">不认识</button>
+        <button class="act hard" data-quality="hard">模糊</button>
+        <button class="act easy" data-quality="easy">认识</button>
       </div>
-      <div class="study-progress-bar"><span id="studyProgressBar"></span></div>
-      <button id="autoSpeakButton" class="auto-speak-toggle" hidden>开启自动朗读</button>
+      <div class="prog-bar"><i id="studyProgressBar"></i></div>
     </div>
-  </div>
+  </section>
 
-  
-  <!-- ===== LIBRARY ===== -->
-  <div id="libraryView" class="view">
-    <div class="page-content">
-      <div class="page-header">
-        <h2>词库</h2>
-        <div class="filter-row">
-          <button class="filter-btn active" data-library-filter="all">全部</button>
-          <button class="filter-btn" data-library-filter="word">单词</button>
-          <button class="filter-btn" data-library-filter="phrase">短语</button>
-        </div>
-      </div>
-      <div class="search-row">
-        <input type="text" id="librarySearch" class="search-input" class="search-input" placeholder="搜索词条…">
-        <button id="addItemBtn" class="btn-primary sm">+ 添加</button>
-      </div>
-      <div id="libList" class="lib-list"></div>
-      <div id="editPanel" hidden></div>
-
-      <!-- Preset bank import -->
-      <div class="setting-card" style="margin-top:14px;">
-        <h3>导入词库</h3>
-        <div class="field">
-          <select id="presetBankSelect" class="field-select"></select>
-        </div>
-        <p id="presetDescription" class="mini-note" style="margin-bottom:8px;"></p>
-        <p id="presetStats" class="mini-note" style="margin-bottom:8px;"></p>
-        <div class="setting-actions">
-          <button id="importPresetButton" class="btn-primary sm">导入</button>
-          <button id="updatePresetButton" class="btn-primary sm">更新</button>
-          <button id="updateAllPresetsButton" class="btn-ghost sm">全部更新</button>
-        </div>
-      </div>
-      
-      <!-- Add / Edit form -->
-      <div id="addItemForm" class="setting-card" style="margin-top:14px;">
-        <h3>添加 / 编辑词条</h3>
-        <label class="field">
-          <span>类型</span>
-          <select id="itemType" class="field-select">
-            <option value="word">单词</option>
-            <option value="phrase">短语</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>词条</span>
-          <input id="itemTerm" class="field-input" placeholder="输入单词或短语">
-        </label>
-        <label class="field">
-          <span>释义</span>
-          <input id="itemMeaning" class="field-input" placeholder="中文释义">
-        </label>
-        <label class="field">
-          <span>考试释义（可选）</span>
-          <input id="itemExamMeaning" class="field-input" placeholder="考试相关释义">
-        </label>
-        <label class="field">
-          <span>搭配（逗号分隔）</span>
-          <input id="itemCollocations" class="field-input" placeholder="搭配1, 搭配2">
-        </label>
-        <label class="field">
-          <span>例句</span>
-          <input id="itemExample" class="field-input" placeholder="例句">
-        </label>
-        <div class="setting-actions">
-          <button id="formSubmitButton" class="btn-primary sm">保存</button>
-          <button id="cancelEditButton" class="btn-ghost sm">取消</button>
-        </div>
-      </div>
-      
-      <!-- Global search hidden input (for habtm key support) -->
-      <input type="text" id="globalSearch" hidden>
+  <!-- LIBRARY -->
+  <section id="libraryView" class="panel">
+    <button class="back-btn" data-back="home">‹ 返回</button>
+    <h2>词库</h2>
+    <div class="filter-row">
+      <button class="filt active" data-library-filter="all">全部</button>
+      <button class="filt" data-library-filter="word">单词</button>
+      <button class="filt" data-library-filter="phrase">短语</button>
     </div>
-  </div>
-
-  <!-- ===== READ ===== -->
-  <div id="readView" class="view">
-    <div class="page-content">
-      <div class="page-header"><h2>阅读</h2></div>
-      <div class="read-controls">
-        <select id="readWordSource" class="field-select">
-          <option value="due">今日待复习</option>
-          <option value="weak">薄弱词</option>
-          <option value="mastered">已掌握</option>
-          <option value="all">全部词库</option>
-        </select>
-        <select id="readLength" class="field-select">
-          <option value="sentence">单句</option>
-          <option value="short" selected>短文</option>
-          <option value="medium">中篇</option>
-        </select>
-        <button id="generatePassageBtn" class="btn-primary">AI 生成文章</button>
-      </div>
-      <div id="passageState" class="empty-state">点击 AI 生成，用学过的词生成文章</div>
-      <div id="passageResult" hidden>
-        <div class="passage-head">
-          <strong id="passageTitle"></strong>
-          <button id="toggleTranslationBtn" class="text-btn">翻译</button>
-        </div>
-        <article id="passageText" class="passage-body"></article>
-        <div id="passageTranslation" class="passage-trans" hidden></div>
-        <p class="passage-hint">点击蓝色单词查看释义和标记</p>
-      </div>
-      <div class="passage-vocab-panel">
-        <strong>本文词表</strong>
-        <div id="passageVocabList" class="chip-row"></div>
-        <div id="passageWordDetail" hidden></div>
-      </div>
+    <input type="text" id="librarySearch" class="search-input" placeholder="搜索…">
+    <div id="libList" class="lib-list"></div>
+    <div id="editPanel" hidden></div>
+    <div class="card" style="margin-top:12px;">
+      <h3>导入词库</h3>
+      <select id="presetBankSelect" class="fld"></select>
+      <p id="presetDescription" class="mini"></p>
+      <p id="presetStats" class="mini"></p>
+      <button id="importPresetButton" class="btn">导入</button>
+      <button id="updatePresetButton" class="btn">更新</button>
+      <button id="updateAllPresetsButton" class="btn-ghost">全部更新</button>
     </div>
-  </div>
+    <form id="addItemForm" class="card" style="margin-top:8px;">
+      <h3>添加词条</h3>
+      <select id="itemType" class="fld"><option value="word">单词</option><option value="phrase">短语</option></select>
+      <input id="itemTerm" class="fld" placeholder="单词或短语">
+      <input id="itemMeaning" class="fld" placeholder="释义">
+      <input id="itemExamMeaning" class="fld" placeholder="考试释义（可选）">
+      <input id="itemCollocations" class="fld" placeholder="搭配，逗号分隔">
+      <input id="itemExample" class="fld" placeholder="例句">
+      <button id="formSubmitButton" class="btn">加入词库</button>
+      <button id="cancelEditButton" class="btn-ghost" hidden>取消</button>
+    </form>
+    <input type="text" id="globalSearch" hidden>
+  </section>
 
-  <!-- ===== ESSAY ===== -->
-  <div id="essayView" class="view">
-    <div class="page-content">
-      <div class="page-header"><h2>AI 批改</h2></div>
-      <div class="mode-switch">
-        <button class="mode-btn active" data-essay-mode="text">打字</button>
-        <button class="mode-btn" data-essay-mode="image">拍照</button>
-      </div>
-      <div id="essayTextArea">
-        <textarea id="essayTextInput" class="essay-textarea" rows="12" placeholder="在这里写你的英文作文…"></textarea>
-      </div>
-      <div id="essayImageArea" hidden>
-        <div id="dropZone" class="drop-zone">
-          <input id="essayImageInput" type="file" accept="image/*" hidden>
-          <div id="dropEmpty"><strong>点击或拖拽上传作文图片</strong></div>
-          <img id="essayPreview" alt="预览" hidden>
-        </div>
-      </div>
-      <div class="essay-options">
-        <input id="essayPrompt" class="field-input" placeholder="题目 / 要求（可选）">
-        <select id="targetLevel" class="field-select">
-          <option value="natural-simple">自然简单</option>
-          <option value="easy">更简单可背</option>
-          <option value="exam">偏考试表达</option>
-        </select>
-      </div>
-      <button id="reviewEssayButton" class="btn-primary full-width">开始批改</button>
-      <div id="reviewState" class="empty-state review-state">写完或拍照后，点批改查看评分和纠错</div>
-      <div id="reviewResult" hidden></div>
+  <!-- READ -->
+  <section id="readView" class="panel">
+    <button class="back-btn" data-back="home">‹ 返回</button>
+    <h2>阅读</h2>
+    <select id="readWordSource" class="fld">
+      <option value="due">今日待复习</option>
+      <option value="weak">薄弱词</option>
+      <option value="mastered">已掌握</option>
+      <option value="all">全部词库</option>
+    </select>
+    <select id="readLength" class="fld">
+      <option value="sentence">单句</option>
+      <option value="short" selected>短文</option>
+      <option value="medium">中篇</option>
+    </select>
+    <button id="generatePassageBtn" class="btn block">AI 生成文章</button>
+    <div id="passageState" class="empty">点击生成，用学过的词生成文章</div>
+    <div id="passageResult" hidden>
+      <strong id="passageTitle"></strong>
+      <button id="toggleTranslationBtn" class="btn-ghost">翻译</button>
+      <article id="passageText" class="pg-body"></article>
+      <div id="passageTranslation" class="pg-trans" hidden></div>
+      <p class="mini">点击蓝色单词查看释义</p>
     </div>
-  </div>
-
-  <!-- ===== SETTINGS ===== -->
-  <div id="settingsView" class="view">
-    <div class="page-content">
-      <div class="page-header"><h2>设置</h2></div>
-      <div class="setting-card">
-        <h3>AI 模型</h3>
-        <label class="field">
-          <span>提供商</span>
-          <select id="providerSelect" class="field-select">
-            <option value="deepseek">DeepSeek</option>
-            <option value="openai">OpenAI</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>API Key</span>
-          <input id="apiKeyInput" class="field-input" type="password" autocomplete="off" placeholder="sk-...">
-        </label>
-        <label class="field">
-          <span>模型</span>
-          <select id="modelSelect" class="field-select"></select>
-        </label>
-        <div class="setting-actions">
-          <button id="saveSettingsButton" class="btn-primary sm">保存</button>
-          <button id="clearSettingsButton" class="btn-ghost sm">清除</button>
-        </div>
-      </div>
-      <div class="setting-card">
-        <h3>记忆间隔</h3>
-        <p class="mini-note">默认艾宾浩斯曲线，可自定义间隔天数</p>
-        <label class="radio-row"><input type="radio" name="srsMode" id="srsModeEbbinghaus" value="ebbinghaus" checked> 艾宾浩斯（1, 2, 4, 7, 14, 30, 60 天）</label>
-        <label class="radio-row"><input type="radio" name="srsMode" id="srsModeCustom" value="custom"> 自定义</label>
-        <input id="srsIntervalsInput" class="field-input" type="text" value="1,2,4,7,14,30,60" placeholder="1,2,4,7,14,30,60" hidden>
-        <button id="saveSrsSettingsBtn" class="btn-primary sm">保存间隔</button>
-      </div>
-      <p class="connection-note"><span id="connectionTitle"></span> · <span id="connectionDetail"></span></p>
-      <button id="exportButton" class="btn-ghost sm export-btn">导出记录</button>
+    <div class="card">
+      <strong>本文词表</strong>
+      <div id="passageVocabList" class="chip-row"></div>
+      <div id="passageWordDetail" hidden></div>
     </div>
-  </div>
+  </section>
 
-  <!-- ===== BOTTOM TAB BAR (不背单词风格) ===== -->
-  <nav class="tab-bar">
-    <button class="tab-item active" data-view="study">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-      <span>学习</span>
-    </button>
-        <button class="tab-item" data-view="stats">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-6"/></svg>
-      <span>统计</span>
-    </button>
-    <button class="tab-item" data-view="library">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-      <span>词库</span>
-    </button>
-    <button class="tab-item" data-view="read">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h12"/></svg>
-      <span>阅读</span>
-    </button>
-    <button class="tab-item" data-view="essay">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      <span>批改</span>
-    </button>
-    
-    <button class="tab-item" data-view="settings">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-      <span>设置</span>
-    </button>
-  </nav>
+  <!-- ESSAY -->
+  <section id="essayView" class="panel">
+    <button class="back-btn" data-back="home">‹ 返回</button>
+    <h2>AI 批改</h2>
+    <div class="mode-row">
+      <button class="mode active" data-essay-mode="text">打字</button>
+      <button class="mode" data-essay-mode="image">拍照</button>
+    </div>
+    <textarea id="essayTextInput" class="fld ta" rows="10" placeholder="写英文作文…"></textarea>
+    <div id="essayImageArea" hidden>
+      <div id="dropZone" class="drop"><input id="essayImageInput" type="file" accept="image/*" hidden><div id="dropEmpty">点击上传图片</div><img id="essayPreview" alt="预览" hidden></div>
+    </div>
+    <input id="essayPrompt" class="fld" placeholder="题目/要求（可选）">
+    <select id="targetLevel" class="fld">
+      <option value="natural-simple">自然简单</option>
+      <option value="easy">更简单可背</option>
+      <option value="exam">偏考试表达</option>
+    </select>
+    <button id="reviewEssayButton" class="btn block">开始批改</button>
+    <div id="reviewState" class="empty">写完点批改查看评分</div>
+    <div id="reviewResult" hidden></div>
+  </section>
+
+  <!-- HABITS -->
+  <section id="habitsView" class="panel">
+    <button class="back-btn" data-back="home">‹ 返回</button>
+    <h2>习惯分析</h2>
+    <div id="habitSummary"></div>
+    <h3>建议练习</h3>
+    <div id="practiceList"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="settingsView" class="panel">
+    <button class="back-btn" data-back="home">‹ 返回</button>
+    <h2>设置</h2>
+    <div class="card">
+      <h3>AI 模型</h3>
+      <label class="fld-lbl"><span>提供商</span><select id="providerSelect" class="fld"><option value="deepseek">DeepSeek</option><option value="openai">OpenAI</option></select></label>
+      <label class="fld-lbl"><span>API Key</span><input id="apiKeyInput" class="fld" type="password" placeholder="sk-..."></label>
+      <label class="fld-lbl"><span>模型</span><select id="modelSelect" class="fld"></select></label>
+      <button id="saveSettingsButton" class="btn">保存</button>
+      <button id="clearSettingsButton" class="btn-ghost">清除</button>
+    </div>
+    <div class="card">
+      <h3>记忆间隔</h3>
+      <label class="radio"><input type="radio" name="srsMode" id="srsModeEbbinghaus" value="ebbinghaus" checked> 艾宾浩斯</label>
+      <label class="radio"><input type="radio" name="srsMode" id="srsModeCustom" value="custom"> 自定义</label>
+      <input id="srsIntervalsInput" class="fld" value="1,2,4,7,14,30,60" hidden>
+      <button id="saveSrsSettingsBtn" class="btn">保存</button>
+    </div>
+    <p class="mini" id="connectionInfo"></p>
+    <button id="exportButton" class="btn-ghost">导出记录</button>
+  </section>
 
 </div>
 

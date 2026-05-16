@@ -1038,3 +1038,231 @@ function escapeHtml(value) {
 }
 
 init();
+
+// ========== app-dashboard.js - Stats and dashboard rendering ==========
+
+const elsStats = {
+  statTotalWords: document.querySelector('#statTotalWords'),
+  statMastered: document.querySelector('#statMastered'),
+  statDueToday: document.querySelector('#statDueToday'),
+  statTotalReviews: document.querySelector('#statTotalReviews'),
+  progressCircle: document.querySelector('#progressCircle'),
+  ringPercent: document.querySelector('#ringPercent'),
+  weeklyHeatmap: document.querySelector('#weeklyHeatmap'),
+  recentReviews: document.querySelector('#recentReviews'),
+  streakBadge: document.querySelector('#streakBadge'),
+  streakCount: document.querySelector('#streakCount'),
+  welcomeCard: document.querySelector('#welcomeCard'),
+  welcomeTitle: document.querySelector('#welcomeTitle'),
+  welcomeSub: document.querySelector('#welcomeSub'),
+  sessionCompleteView: document.querySelector('#sessionCompleteView'),
+  sessionRight: document.querySelector('#sessionRight'),
+  sessionHard: document.querySelector('#sessionHard'),
+  sessionAgain: document.querySelector('#sessionAgain'),
+  sessionCompleteMsg: document.querySelector('#sessionCompleteMsg'),
+};  
+
+function renderDashboard() {
+  if (!elsStats.statTotalWords) return;
+  
+  const total = state.items.length;
+  const mastered = state.items.filter(i => i.mastery >= 4).length;
+  const dueToday = getDueItems().length;
+  const totalReviews = state.sessions.reduce((sum, s) => sum + (s.reviewed || s.count || 0), 0);
+  const masteryRate = total > 0 ? Math.round((mastered / total) * 100) : 0;
+  
+  // Stats cards
+  elsStats.statTotalWords.textContent = total;
+  elsStats.statMastered.textContent = mastered;
+  elsStats.statDueToday.textContent = dueToday;
+  elsStats.statTotalReviews.textContent = totalReviews;
+  
+  // Progress ring
+  const circumference = 326.73; // 2 * PI * 52
+  const offset = circumference - (masteryRate / 100) * circumference;
+  if (elsStats.progressCircle) {
+    elsStats.progressCircle.style.strokeDashoffset = offset;
+  }
+  if (elsStats.ringPercent) {
+    elsStats.ringPercent.textContent = masteryRate + '%';
+  }
+  
+  // Streak
+  const streak = calculateStreak();
+  if (elsStats.streakCount) elsStats.streakCount.textContent = streak;
+  if (elsStats.streakBadge) {
+    elsStats.streakBadge.style.display = streak > 0 ? 'inline-flex' : 'none';
+  }
+  
+  // Welcome card
+  if (elsStats.welcomeTitle) {
+    if (total <= 2) {
+      elsStats.welcomeTitle.textContent = '开始你的学习之旅';
+      elsStats.welcomeSub.textContent = '去词库导入四级/六级词汇，开启你的背词之路';
+    } else if (dueToday === 0) {
+      elsStats.welcomeTitle.textContent = '🎉 今日任务完成';
+      elsStats.welcomeSub.textContent = '你已经完成今天所有待复习内容，继续保持！';
+    } else {
+      elsStats.welcomeTitle.textContent = '继续加油！';
+      elsStats.welcomeSub.textContent = '还有 ' + dueToday + ' 个词条等待复习';
+    }
+  }
+  
+  // Weekly heatmap
+  renderWeeklyHeatmap();
+  
+  // Recent reviews
+  renderRecentReviews();
+}
+
+function calculateStreak() {
+  const sessions = state.sessions || [];
+  if (!sessions.length) return 0;
+  
+  const dates = [...new Set(sessions.map(s => s.date || todayKey()))].sort().reverse();
+  if (dates[0] !== todayKey()) return 0;
+  
+  let streak = 1;
+  for (let i = 1; i < dates.length; i++) {
+    const prev = new Date(dates[i - 1]);
+    const curr = new Date(dates[i]);
+    const diff = (prev - curr) / (1000 * 60 * 60 * 24);
+    if (diff === 1) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function renderWeeklyHeatmap() {
+  if (!elsStats.weeklyHeatmap) return;
+  const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+  const today = new Date();
+  const sessions = state.sessions || [];
+  const activeDates = new Set(sessions.map(s => s.date));
+  
+  let html = '';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const isToday = key === todayKey();
+    const isDone = activeDates.has(key);
+    html += '<div class="heatmap-day' + (isDone ? ' done' : '') + (isToday ? ' today' : '') + '">' +
+      '<span class="day-name">' + dayNames[d.getDay()] + '</span>' +
+      (isDone ? '✓' : '·') +
+      '</div>';
+  }
+  elsStats.weeklyHeatmap.innerHTML = html;
+}
+
+function renderRecentReviews() {
+  if (!elsStats.recentReviews) return;
+  const reviews = (state.reviews || []).slice(0, 5);
+  if (!reviews.length) {
+    elsStats.recentReviews.innerHTML = '<div class="empty-state"><strong>还没有批改记录</strong><span>去「批改」tab 写一篇作文试试 AI 批改</span></div>';
+    return;
+  }
+  elsStats.recentReviews.innerHTML = reviews.map(r => {
+    const date = r.reviewedAt ? new Date(r.reviewedAt).toLocaleDateString('zh-CN') : '';
+    const scoreColor = (r.score || 0) >= 80 ? 'var(--green)' : (r.score || 0) >= 60 ? 'var(--orange)' : 'var(--red)';
+    return '<div class="review-card">' +
+      '<div class="review-date">' + escapeHtml(date) + '</div>' +
+      '<div class="review-score" style="color:' + scoreColor + '">' + (r.score || '--') + ' 分</div>' +
+      '<div class="review-comment">' + escapeHtml((r.teacherCommentCn || '').slice(0, 80)) + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+// ========== SESSION COMPLETE ==========
+let sessionStats = { right: 0, hard: 0, again: 0 };
+
+function onStudySessionComplete() {
+  const due = getDueItems();
+  if (due.length > 0) {
+    // More weak words to review
+    if (elsStats.sessionCompleteMsg) {
+      elsStats.sessionCompleteMsg.textContent = '还有 ' + due.length + ' 个薄弱词可以继续复习';
+    }
+  }
+  if (elsStats.sessionRight) elsStats.sessionRight.textContent = sessionStats.right;
+  if (elsStats.sessionHard) elsStats.sessionHard.textContent = sessionStats.hard;
+  if (elsStats.sessionAgain) elsStats.sessionAgain.textContent = sessionStats.again;
+  
+  showView('sessionComplete');
+  document.querySelector('.tab-bar').style.display = 'none';
+}
+
+function onContinueStudy() {
+  hideView('sessionComplete');
+  document.querySelector('.tab-bar').style.display = '';
+  sessionStats = { right: 0, hard: 0, again: 0 };
+  showView('study');
+  initStudySession();
+}
+
+function showView(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const target = document.querySelector('#' + viewId + 'View');
+  if (target) {
+    target.classList.add('active');
+    target.removeAttribute('hidden');
+  }
+  if (viewId === 'study' || viewId === 'sessionComplete') {
+    document.querySelector('.tab-bar').style.display = 'none';
+  } else {
+    document.querySelector('.tab-bar').style.display = '';
+  }
+}
+
+function hideView(viewId) {
+  const target = document.querySelector('#' + viewId + 'View');
+  if (target) {
+    target.classList.remove('active');
+    target.setAttribute('hidden', '');
+  }
+}
+
+
+// ========== Enhanced init and routing ==========
+
+// Override tab click to use showView
+const origInit = (typeof init === 'function') ? init : function(){};
+
+// Hook into the existing init - update view switching to render dashboard
+const origShowView = function(viewId) {
+  if (viewId === 'stats') {
+    renderDashboard();
+  }
+};
+
+// After init, hook tab clicks for stats rendering
+setTimeout(function() {
+  const tabItems = document.querySelectorAll('.tab-item');
+  tabItems.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const view = this.getAttribute('data-view');
+      if (view === 'stats') {
+        setTimeout(renderDashboard, 100);
+      }
+    });
+  });
+  
+  // Hook session continue button
+  const continueBtn = document.querySelector('#sessionContinueBtn');
+  if (continueBtn) {
+    continueBtn.addEventListener('click', onContinueStudy);
+  }
+  const backBtn = document.querySelector('#sessionBackBtn');
+  if (backBtn) {
+    backBtn.addEventListener('click', function() {
+      hideView('sessionComplete');
+      document.querySelector('.tab-bar').style.display = '';
+      showView('library');
+      document.querySelectorAll('.tab-item').forEach(function(t) {
+        t.classList.toggle('active', t.getAttribute('data-view') === 'library');
+      });
+      renderLibrary();
+    });
+  }
+}, 500);
+

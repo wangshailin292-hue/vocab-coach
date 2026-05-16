@@ -478,11 +478,9 @@ function markCard(quality) {
   // Disable buttons and advance after 2s
   els.qualityButtons.forEach(b => b.disabled = true);
   els.revealButton.disabled = true;
-  window.setTimeout(() => {
-    currentCardId = null;
-    renderStudy();
-    renderStats();
-  }, 2000);
+  currentCardId = null;
+  renderStudy();
+  renderStats();
 }
 
 ﻿// app-library.js - Library management

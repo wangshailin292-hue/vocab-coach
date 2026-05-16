@@ -65,7 +65,7 @@
     </div>
     <div class="study-body">
       <div class="card-front" id="studyCardFront">
-        <p id="cardPrompt" class="big-word">loading</p>
+        <span id="frontTermHint" hidden></span><p id="cardPrompt" class="big-word">loading</p>
         <button id="frontSpeakButton" class="speak-btn">🔊 英</button>
         <button id="revealButton" class="reveal-btn">点击显示答案</button>
       </div>
@@ -200,7 +200,7 @@
       <input id="srsIntervalsInput" class="fld" value="1,2,4,7,14,30,60" hidden>
       <button id="saveSrsSettingsBtn" class="btn">保存</button>
     </div>
-    <p class="mini" id="connectionInfo"></p>
+    <p class="mini"><span id="connectionTitle"></span> · <span id="connectionDetail"></span></p><p class="mini" id="connectionInfo" hidden></p>
     <button id="exportButton" class="btn-ghost">导出记录</button>
   </section>
 
